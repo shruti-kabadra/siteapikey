@@ -1,0 +1,4 @@
+name = Site API Key
+description = "Provides textfield to store the Site API key value and provides URL for JSON representation of a node"
+package = custom
+core = 7.x

@@ -1,0 +1,85 @@
+<?php
+
+/******************************************************************************************
+* Project Name   : Site API Key
+* Version        : 7.x
+* Module Name    : site_info
+* File Name      : site_info.module
+* Description / Purpose  : Implementation of hook_form_form_id_alter to add a siteapikey textfield
+* Author      : Shruti Kabadra
+******************************************************************************************/
+function site_info_form_system_site_information_settings_alter(&$form, $form_state, $form_id) {
+	$form['actions']['submit']['#value'] = 'Update Configuration';
+	$form['site_information']['siteapikey'] =  array(
+		'#title' => t('Site API Key'),
+		'#description' => t('Site API Key'),
+		'#type' => 'textfield',
+		'#default_value' => !empty(variable_get('siteapikey')) ? variable_get('siteapikey') : 'No API Key yet',
+	);
+	$form['#submit'][] = 'site_info_submit_handler';   
+}
+
+/******************************************************************************************
+* Project Name   : Site API Key
+* Version        : 7.x
+* Module Name    : site_info
+* File Name      : site_info.module
+* Description / Purpose  : Implementation of site_info_submit_handler to save the siteapikey field
+* Author      : Shruti Kabadra
+******************************************************************************************/
+function site_info_submit_handler($form, &$form_state){
+	 variable_set('siteapikey', $form_state['values']['siteapikey']);
+	 $val = variable_get('siteapikey');
+	 drupal_set_message("Site API key has been saved with the value '$val'");
+}
+
+/******************************************************************************************
+* Project Name   : Site API Key
+* Version        : 7.x
+* Module Name    : site_info
+* File Name      : site_info.module
+* Description / Purpose  : Implementation of hook_menu to  provides a URL that responds with a JSON representation of a given node
+* Author      : Shruti Kabadra
+******************************************************************************************/
+function site_info_menu() {
+	$items = array();
+	$items['page_json/%'] = array(
+		'title' => 'JSON representation',
+		'page callback' => 'site_info_page_json_converter',
+		'page arguments' => array(1),
+		'access callback' => TRUE,
+		'type' => MENU_CALLBACK,
+	);
+	return $items;
+}
+
+/******************************************************************************************
+* Project Name   : Site API Key
+* Version        : 7.x
+* Module Name    : site_info
+* File Name      : site_info.module
+* Description / Purpose  : Page callback function 'site_info_page_json_converter' which responds with a JSON representation of a given node only 
+when the content type is "page" and  previously submitted API Key and a node id (nid) of an appropriate node are present, otherwise it will respond 
+with "access denied".
+* Author      : Shruti Kabadra
+******************************************************************************************/
+function site_info_page_json_converter() {
+	$access = FALSE;
+	if (arg(0) == 'page_json' && is_numeric(arg(1))) {
+		$siteapikey = variable_get('siteapikey');
+		if ($siteapikey != NULL || $siteapikey == '') {
+			$node = node_load(arg(1));
+			if ($node->type == 'page' && $node->status == 1) {
+				print '<pre>';
+				print json_encode($node);
+				$access = TRUE;
+				exit;
+			}
+		} 
+	}
+	if ($access == FALSE) {
+		drupal_set_message('Access denied','error');
+	}
+} 
+    
+?>
